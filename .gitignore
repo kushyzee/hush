@@ -5,10 +5,12 @@
 /.pnp
 .pnp.*
 .yarn/*
+/.agents
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+AGENTS.md
 
 # testing
 /coverage
