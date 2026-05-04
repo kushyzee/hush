@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hush: Keep it between you two.",
+  title: "Hush - Keep it between you two.",
   description:
     "End-to-end encrypted messaging. Your conversations, your keys, your privacy.",
 };

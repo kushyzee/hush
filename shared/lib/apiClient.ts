@@ -1,14 +1,6 @@
-// shared/lib/apiClient.ts
-// Base fetch wrapper for all WhisperBox REST API calls.
-// Handles: auth headers, 401 token refresh + retry, error normalisation.
-
 import type { TokenResponse } from "@/shared/types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
-
-// Access token lives in memory only — never localStorage, never a cookie.
-// The cookie in proxy.ts is a separate httpOnly presence signal for the
-// route guard; the actual Bearer token used for API calls lives here.
 
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
@@ -87,18 +79,15 @@ async function request<T>(
     ...(extraHeaders as Record<string, string> | undefined),
   });
 
-  // First attempt
   let res = await fetch(`${BASE_URL}${path}`, {
     ...rest,
     headers: buildHeaders(accessToken),
   });
 
-  // 401 → try to refresh and retry once
   if (res.status === 401 && !skipAuth) {
     const newToken = await attemptRefresh();
 
     if (!newToken) {
-      // Refresh failed — caller should handle redirect to login
       throw new ApiError(401, "Session expired. Please log in again.");
     }
 
@@ -109,7 +98,6 @@ async function request<T>(
     });
   }
 
-  // Parse response
   if (!res.ok) {
     let body: unknown;
     try {
@@ -125,7 +113,6 @@ async function request<T>(
     throw new ApiError(res.status, message, body);
   }
 
-  // 204 No Content
   if (res.status === 204) return undefined as T;
 
   return res.json() as Promise<T>;
@@ -144,7 +131,6 @@ export const apiClient = {
     });
   },
 
-  // Convenience: public endpoints that need no auth header
   publicPost<T>(path: string, body?: unknown) {
     return request<T>(path, {
       method: "POST",

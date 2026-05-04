@@ -1,3 +1,5 @@
+import LoginForm from "@/features/auth/components/LoginForm";
+
 export default function LoginPage() {
-  return <div>Login — coming soon</div>;
+  return <LoginForm />;
 }
