@@ -10,8 +10,9 @@ import {
   FieldError,
   FieldGroup,
 } from "@/shared/components/ui/field";
-import { UserPlus } from "lucide-react";
+import logo from "@/app/icon.svg";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function RegisterForm() {
   const form = useForm({
@@ -34,7 +35,12 @@ export default function RegisterForm() {
     <div className="w-full max-w-md mx-auto p-8 rounded-2xl bg-card border border-border shadow-md">
       <div className="flex flex-col items-center mb-8 text-center">
         <div className="p-4 bg-(--brand-glow) rounded-full mb-6">
-          <UserPlus className="text-primary" size={28} />
+          <Image
+            loading="eager"
+            src={logo}
+            alt="Hush logo"
+            className="w-14 h-auto"
+          />
         </div>
         <h2 className="text-2xl font-semibold text-foreground mb-2">
           Create an Account
@@ -68,7 +74,6 @@ export default function RegisterForm() {
                     aria-invalid={isInvalid}
                     placeholder="your_username"
                     autoComplete="username"
-                    className="bg-background border-input text-foreground"
                   />
                   {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
@@ -92,7 +97,6 @@ export default function RegisterForm() {
                     aria-invalid={isInvalid}
                     placeholder="Your Name"
                     autoComplete="name"
-                    className="bg-background border-input text-foreground"
                   />
                   {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
@@ -117,7 +121,6 @@ export default function RegisterForm() {
                     aria-invalid={isInvalid}
                     placeholder="••••••••"
                     autoComplete="new-password"
-                    className="bg-background border-input text-foreground"
                   />
                   {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
@@ -142,7 +145,6 @@ export default function RegisterForm() {
                     aria-invalid={isInvalid}
                     placeholder="••••••••"
                     autoComplete="new-password"
-                    className="bg-background border-input text-foreground"
                   />
                   {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>

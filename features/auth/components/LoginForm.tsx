@@ -30,7 +30,12 @@ export default function LoginForm() {
     <div className="w-full max-w-md mx-auto p-8 rounded-2xl bg-card border border-border shadow-md">
       <div className="flex flex-col items-center mb-8 text-center">
         <div className="p-4 bg-(--brand-glow) rounded-full mb-6">
-          <Image src={logo} alt="Hush logo" width={64} height={64} />
+          <Image
+            loading="eager"
+            src={logo}
+            alt="Hush logo"
+            className="w-14 h-auto"
+          />
         </div>
         <h2 className="text-2xl font-semibold text-foreground mb-2">
           Welcome Back
@@ -64,7 +69,7 @@ export default function LoginForm() {
                     aria-invalid={isInvalid}
                     placeholder="your_username"
                     autoComplete="username"
-                    className="bg-background border-input text-foreground"
+                    className="bg-background text-foreground"
                   />
                   {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
