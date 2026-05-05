@@ -69,20 +69,22 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  const onNeedRefresh = useCallback(async () => {
+    try {
+      const rt = ""; // ← wire up from AuthContext
+      const { access_token } = await import("@/features/auth/api").then((m) =>
+        m.refreshAccessToken({ refresh_token: rt }),
+      );
+      refreshSession(access_token);
+      return access_token;
+    } catch {
+      return null;
+    }
+  }, [refreshSession]);
+
   const { status: wsStatus, sendMessage } = useWebSocket({
     currentUserId: user?.id ?? "",
-    onNeedRefresh: async () => {
-      try {
-        const rt = ""; // ← wire up from AuthContext
-        const { access_token } = await import("@/features/auth/api").then((m) =>
-          m.refreshAccessToken({ refresh_token: rt }),
-        );
-        refreshSession(access_token);
-        return access_token;
-      } catch {
-        return null;
-      }
-    },
+    onNeedRefresh,
     onInvalidToken: logoutUser,
     onMessageReceived: handleMessageReceived,
     onBumpConversation: bumpConversation,

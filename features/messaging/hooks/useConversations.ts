@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getConversations } from "@/features/messaging/api";
 import { ApiError } from "@/shared/lib/apiClient";
 import type { ConversationSummary } from "@/shared/types";
@@ -60,7 +60,7 @@ export function useConversations(): UseConversationsReturn {
     }
   };
 
-  const bumpConversation = (userId: string, lastMessageAt: string) => {
+  const bumpConversation = useCallback((userId: string, lastMessageAt: string) => {
     setConversations((prev) => {
       const idx = prev.findIndex((c) => c.user_id === userId);
       if (idx === -1) return prev;
@@ -68,14 +68,14 @@ export function useConversations(): UseConversationsReturn {
       const rest = prev.filter((_, i) => i !== idx);
       return [updated, ...rest];
     });
-  };
+  }, []);
 
-  const ensureConversation = (partner: ConversationSummary) => {
+  const ensureConversation = useCallback((partner: ConversationSummary) => {
     setConversations((prev) => {
       if (prev.some((c) => c.user_id === partner.user_id)) return prev;
       return [partner, ...prev];
     });
-  };
+  }, []);
 
   return {
     conversations,

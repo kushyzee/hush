@@ -1,7 +1,6 @@
 import { useRouter } from "next/navigation";
-import { LogOut, Plus, Lock } from "lucide-react";
+import { LogOut, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/shared/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -19,6 +18,8 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import type { UseConversationsReturn } from "@/features/messaging/hooks/useConversations";
 import type { ConnectionStatus } from "@/features/messaging/hooks/useWebSocket";
 import { ConversationList } from "./ConversationList";
+import Image from "next/image";
+import logo from "@/app/icon.svg";
 
 interface SidebarProps {
   conversations: UseConversationsReturn["conversations"];
@@ -59,8 +60,13 @@ export function Sidebar({
       <div className="flex items-center justify-between px-4 pt-5 pb-4">
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <div className="size-7 rounded-lg bg-primary flex items-center justify-center">
-            <Lock size={13} className="text-primary-foreground" />
+          <div className="size-6 flex items-center justify-center">
+            <Image
+              src={logo}
+              alt="Logo"
+              loading="eager"
+              className="w-full h-full object-cover"
+            />
           </div>
           <span className="text-base font-semibold tracking-tight text-foreground">
             Hush
@@ -70,15 +76,13 @@ export function Sidebar({
         {/* New chat button */}
         <Tooltip>
           <TooltipTrigger>
-            <Button
-              size="icon"
-              variant="ghost"
+            <div
               onClick={onNewChat}
-              className="size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary"
+              className="size-8 rounded-full p-2 text-muted-foreground hover:text-foreground hover:bg-secondary"
               aria-label="New conversation"
             >
               <Plus size={17} />
-            </Button>
+            </div>
           </TooltipTrigger>
           <TooltipContent side="bottom">New conversation</TooltipContent>
         </Tooltip>

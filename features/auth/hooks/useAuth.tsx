@@ -147,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(auth.user);
   }, []);
 
-  const logoutUser = async () => {
+  const logoutUser = useCallback(async () => {
     try {
       const rt = refreshTokenRef.current;
       if (rt) await apiLogout(rt);
@@ -159,16 +159,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await clearKeys();
       setUser(null);
     }
-  };
+  }, []);
 
-  const refreshSession = (newAccessToken: string, newRefreshToken?: string) => {
+  const refreshSession = useCallback((newAccessToken: string, newRefreshToken?: string) => {
     const rt = newRefreshToken ?? refreshTokenRef.current ?? "";
     setTokens(newAccessToken, rt);
 
     document.cookie = `access_token=${newAccessToken}; path=/; SameSite=Lax`;
 
     if (newRefreshToken) refreshTokenRef.current = newRefreshToken;
-  };
+  }, []);
 
   return (
     <AuthContext.Provider
