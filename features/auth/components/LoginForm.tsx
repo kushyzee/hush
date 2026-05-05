@@ -13,8 +13,14 @@ import {
 import logo from "@/app/icon.svg";
 import Link from "next/link";
 import Image from "next/image";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../hooks/useAuth";
 
 export default function LoginForm() {
+  const router = useRouter();
+  const { loginUser } = useAuth();
+
   const form = useForm({
     defaultValues: { username: "", password: "" },
     validators: {
@@ -22,7 +28,16 @@ export default function LoginForm() {
       onSubmit: loginSchema,
     },
     onSubmit: async ({ value }) => {
-      console.log("Login submitted:", value);
+      try {
+        await loginUser(value.username, value.password);
+        router.push("/chat");
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Login failed. Please try again.";
+        toast.error(message);
+      }
     },
   });
 

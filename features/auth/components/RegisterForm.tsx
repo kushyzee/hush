@@ -14,7 +14,14 @@ import logo from "@/app/icon.svg";
 import Link from "next/link";
 import Image from "next/image";
 
+import { useRouter } from "next/navigation";
+import { useAuth } from "../hooks/useAuth";
+import { toast } from "sonner";
+
 export default function RegisterForm() {
+  const router = useRouter();
+  const { registerUser } = useAuth();
+
   const form = useForm({
     defaultValues: {
       username: "",
@@ -27,7 +34,16 @@ export default function RegisterForm() {
       onSubmit: registerSchema,
     },
     onSubmit: async ({ value }) => {
-      console.log("Register submitted:", value);
+      try {
+        await registerUser(value.username, value.display_name, value.password);
+        router.push("/chat");
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Registration failed. Please try again.";
+        toast.error(message);
+      }
     },
   });
 
