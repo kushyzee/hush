@@ -127,7 +127,7 @@ export default function LoginForm() {
               disabled={!canSubmit || isSubmitting}
               className="w-full mt-2"
             >
-              {isSubmitting ? "Unlocking vault…" : "Sign in"}
+              {isSubmitting ? "Hushing..." : "Sign in"}
             </Button>
           )}
         </form.Subscribe>

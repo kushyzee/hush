@@ -12,7 +12,7 @@ import { useTokenRefresh } from "@/shared/hooks/useTokenRefresh";
 import { ChatContext } from "../context/ChatContext";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user, isReady, isAuthenticated, logoutUser, refreshSession } =
+  const { user, isReady, isAuthenticated, logoutUser, refreshSession, refreshToken } =
     useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -50,7 +50,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   useTokenRefresh({
     expiresIn: 900,
 
-    refreshToken: "",
+    refreshToken: refreshToken ?? "",
     onRefreshed: (newToken) => refreshSession(newToken),
     onExpired: logoutUser,
   });
@@ -71,7 +71,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   const onNeedRefresh = useCallback(async () => {
     try {
-      const rt = ""; // ← wire up from AuthContext
+      const rt = refreshToken ?? ""; // ← wired up from AuthContext
       const { access_token } = await import("@/features/auth/api").then((m) =>
         m.refreshAccessToken({ refresh_token: rt }),
       );
@@ -80,7 +80,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     } catch {
       return null;
     }
-  }, [refreshSession]);
+  }, [refreshSession, refreshToken]);
 
   const { status: wsStatus, sendMessage } = useWebSocket({
     currentUserId: user?.id ?? "",

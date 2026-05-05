@@ -52,6 +52,7 @@ interface AuthContextValue {
   logoutUser: () => Promise<void>;
 
   refreshSession: (newAccessToken: string, newRefreshToken?: string) => void;
+  refreshToken: string | null;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -59,15 +60,30 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isReady, setIsReady] = useState(false);
-
-  const refreshTokenRef = useRef<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     async function restoreSession() {
       try {
-        const token = getAccessToken();
+        let token = getAccessToken();
+        let rToken = refreshToken;
+
+        if (!token) {
+          const match = document.cookie.match(/(?:^|; )access_token=([^;]+)/);
+          if (match) token = match[1];
+        }
+
+        if (!rToken) {
+          rToken = localStorage.getItem("refresh_token");
+        }
+
+        if (token && rToken) {
+          setTokens(token, rToken);
+          if (!cancelled) setRefreshToken(rToken);
+        }
+
         const keyExists = await hasKey("privateKey");
 
         if (token && keyExists) {
@@ -76,6 +92,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch {
         clearTokens();
+        document.cookie = "access_token=; path=/; max-age=0";
+        localStorage.removeItem("refresh_token");
+        if (!cancelled) setRefreshToken(null);
       } finally {
         if (!cancelled) setIsReady(true);
       }
@@ -113,7 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       document.cookie = `access_token=${auth.access_token}; path=/; SameSite=Lax`;
 
-      refreshTokenRef.current = auth.refresh_token;
+      localStorage.setItem("refresh_token", auth.refresh_token);
+      setRefreshToken(auth.refresh_token);
 
       await storeKeyPair(privateKey, publicKey);
 
@@ -130,7 +150,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     document.cookie = `access_token=${auth.access_token}; path=/; SameSite=Lax`;
 
-    refreshTokenRef.current = auth.refresh_token;
+    localStorage.setItem("refresh_token", auth.refresh_token);
+    setRefreshToken(auth.refresh_token);
     const wrappingKey = await deriveWrappingKey(
       password,
       auth.user.pbkdf2_salt,
@@ -149,25 +170,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutUser = useCallback(async () => {
     try {
-      const rt = refreshTokenRef.current;
+      const rt = localStorage.getItem("refresh_token");
       if (rt) await apiLogout(rt);
     } catch {
     } finally {
       clearTokens();
       document.cookie = "access_token=; path=/; max-age=0";
-      refreshTokenRef.current = null;
+      localStorage.removeItem("refresh_token");
+      setRefreshToken(null);
       await clearKeys();
       setUser(null);
     }
   }, []);
 
   const refreshSession = useCallback((newAccessToken: string, newRefreshToken?: string) => {
-    const rt = newRefreshToken ?? refreshTokenRef.current ?? "";
+    const rt = newRefreshToken ?? localStorage.getItem("refresh_token") ?? "";
     setTokens(newAccessToken, rt);
 
     document.cookie = `access_token=${newAccessToken}; path=/; SameSite=Lax`;
 
-    if (newRefreshToken) refreshTokenRef.current = newRefreshToken;
+    if (newRefreshToken) {
+      localStorage.setItem("refresh_token", newRefreshToken);
+      setRefreshToken(newRefreshToken);
+    }
   }, []);
 
   return (
@@ -180,6 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginUser,
         logoutUser,
         refreshSession,
+        refreshToken,
       }}
     >
       {children}

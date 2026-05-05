@@ -1,7 +1,13 @@
+import { ConversationPageClient } from "@/features/messaging/components/ConversationPageClient";
+
+interface ConversationPageProps {
+  params: Promise<{ userId: string }>;
+}
+
 export default async function ConversationPage({
   params,
-}: {
-  params: { userId: string };
-}) {
-  return <div>Conversation with {params.userId} — coming soon</div>;
+}: ConversationPageProps) {
+  const { userId } = await params;
+
+  return <ConversationPageClient userId={userId} />;
 }
