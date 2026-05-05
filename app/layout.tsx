@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
+import { AuthProvider } from "@/features/auth/hooks/useAuth";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -32,7 +33,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <AuthProvider>{children}</AuthProvider>
         <Toaster
           position="bottom-right"
           theme="dark"
