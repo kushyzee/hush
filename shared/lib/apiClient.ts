@@ -132,6 +132,7 @@ export const apiClient = {
   },
 
   publicPost<T>(path: string, body?: unknown) {
+    console.log("publicPost", path, body);
     return request<T>(path, {
       method: "POST",
       body: body !== undefined ? JSON.stringify(body) : undefined,

@@ -95,7 +95,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { saltBase64 } = generateSalt();
 
       const wrappingKey = await deriveWrappingKey(password, saltBase64);
-
       const wrappedPrivateKeyBase64 = await wrapPrivateKey(
         privateKey,
         wrappingKey,
@@ -111,6 +110,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       setTokens(auth.access_token, auth.refresh_token);
+
+      document.cookie = `access_token=${auth.access_token}; path=/; SameSite=Lax`;
+
       refreshTokenRef.current = auth.refresh_token;
 
       await storeKeyPair(privateKey, publicKey);
@@ -122,8 +124,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginUser = useCallback(async (username: string, password: string) => {
     const auth = await apiLogin({ username, password });
+    console.log({ auth });
 
     setTokens(auth.access_token, auth.refresh_token);
+
+    document.cookie = `access_token=${auth.access_token}; path=/; SameSite=Lax`;
+
     refreshTokenRef.current = auth.refresh_token;
     const wrappingKey = await deriveWrappingKey(
       password,
@@ -148,20 +154,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
     } finally {
       clearTokens();
+      document.cookie = "access_token=; path=/; max-age=0";
       refreshTokenRef.current = null;
       await clearKeys();
       setUser(null);
     }
   };
 
-  const refreshSession = useCallback(
-    (newAccessToken: string, newRefreshToken?: string) => {
-      const rt = newRefreshToken ?? refreshTokenRef.current ?? "";
-      setTokens(newAccessToken, rt);
-      if (newRefreshToken) refreshTokenRef.current = newRefreshToken;
-    },
-    [],
-  );
+  const refreshSession = (newAccessToken: string, newRefreshToken?: string) => {
+    const rt = newRefreshToken ?? refreshTokenRef.current ?? "";
+    setTokens(newAccessToken, rt);
+
+    document.cookie = `access_token=${newAccessToken}; path=/; SameSite=Lax`;
+
+    if (newRefreshToken) refreshTokenRef.current = newRefreshToken;
+  };
 
   return (
     <AuthContext.Provider

@@ -9,8 +9,6 @@ const AES_GCM_ALGORITHM = "AES-GCM";
 const AES_KEY_LENGTH = 256;
 const AES_IV_LENGTH = 12;
 
-const AES_KW_ALGORITHM = "AES-KW";
-const AES_KW_LENGTH = 256;
 
 const PBKDF2_ITERATIONS = 600_000;
 const PBKDF2_HASH = "SHA-256";
@@ -89,7 +87,7 @@ export async function deriveWrappingKey(
     ["deriveKey"],
   );
 
-  return subtle.deriveKey(
+  const derivedKey = await subtle.deriveKey(
     {
       name: "PBKDF2",
       salt,
@@ -97,29 +95,41 @@ export async function deriveWrappingKey(
       hash: PBKDF2_HASH,
     },
     passwordKey,
-    { name: AES_KW_ALGORITHM, length: AES_KW_LENGTH },
+    { name: AES_GCM_ALGORITHM, length: AES_KEY_LENGTH },
     false,
     ["wrapKey", "unwrapKey"],
   );
+  return derivedKey;
 }
 export async function wrapPrivateKey(
   privateKey: CryptoKey,
   wrappingKey: CryptoKey,
 ): Promise<string> {
+  const iv = globalThis.crypto.getRandomValues(new Uint8Array(AES_IV_LENGTH));
   const wrapped = await subtle.wrapKey("pkcs8", privateKey, wrappingKey, {
-    name: AES_KW_ALGORITHM,
+    name: AES_GCM_ALGORITHM,
+    iv,
   });
-  return bufferToBase64(wrapped);
+
+  const combined = new Uint8Array(iv.length + wrapped.byteLength);
+  combined.set(iv, 0);
+  combined.set(new Uint8Array(wrapped), iv.length);
+
+  return bufferToBase64(combined.buffer);
 }
 export async function unwrapPrivateKey(
   wrappedBase64: string,
   wrappingKey: CryptoKey,
 ): Promise<CryptoKey> {
+  const combined = new Uint8Array(base64ToBuffer(wrappedBase64));
+  const iv = combined.slice(0, AES_IV_LENGTH);
+  const wrapped = combined.slice(AES_IV_LENGTH);
+
   return subtle.unwrapKey(
     "pkcs8",
-    base64ToBuffer(wrappedBase64),
+    wrapped.buffer,
     wrappingKey,
-    { name: AES_KW_ALGORITHM },
+    { name: AES_GCM_ALGORITHM, iv },
     { name: RSA_ALGORITHM, hash: RSA_HASH },
     false,
     ["decrypt"],
