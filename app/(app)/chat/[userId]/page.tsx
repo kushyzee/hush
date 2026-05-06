@@ -8,6 +8,7 @@ export default async function ConversationPage({
   params,
 }: ConversationPageProps) {
   const { userId } = await params;
+  console.log(userId);
 
   return <ConversationPageClient userId={userId} />;
 }
