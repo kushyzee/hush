@@ -13,12 +13,10 @@ import type {
 export async function register(
   payload: RegisterRequest,
 ): Promise<AuthResponse> {
-  console.log("register payload", payload);
   return apiClient.publicPost<AuthResponse>("/auth/register", payload);
 }
 
 export async function login(payload: LoginRequest): Promise<AuthResponse> {
-  console.log("login payload", payload);
   return apiClient.publicPost<AuthResponse>("/auth/login", payload);
 }
 

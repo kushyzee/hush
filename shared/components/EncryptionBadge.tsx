@@ -61,30 +61,9 @@ export function EncryptionBadge() {
               it. Only you and the person you&apos;re talking to can read them.
             </p>
             <p>
-              Not even the server can see your messages — it only stores
+              Not even the server can see your messages, it only stores
               encrypted data it has no key to unlock.
             </p>
-
-            <div className="rounded-xl bg-muted border border-border p-3 space-y-2">
-              <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
-                How it works
-              </p>
-              <ul className="space-y-1.5 text-xs text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <span className="text-success mt-0.5">→</span>
-                  Each message is encrypted with a unique AES‑256 key.
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-success mt-0.5">→</span>
-                  That key is locked with the recipient&apos;s RSA‑4096 public
-                  key.
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-success mt-0.5">→</span>
-                  Only their private key — never shared — can unlock it.
-                </li>
-              </ul>
-            </div>
           </div>
 
           <Button

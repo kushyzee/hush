@@ -35,7 +35,6 @@ export default function RegisterForm() {
     },
     onSubmit: async ({ value }) => {
       try {
-        console.log(value);
         await registerUser(value.username, value.display_name, value.password);
         router.push("/chat");
       } catch (err) {

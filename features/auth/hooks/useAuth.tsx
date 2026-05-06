@@ -5,7 +5,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -104,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshToken]);
 
   const registerUser = useCallback(
     async (username: string, displayName: string, password: string) => {
@@ -144,27 +143,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginUser = useCallback(async (username: string, password: string) => {
     const auth = await apiLogin({ username, password });
-    console.log({ auth });
 
     setTokens(auth.access_token, auth.refresh_token);
-
     document.cookie = `access_token=${auth.access_token}; path=/; SameSite=Lax`;
-
     localStorage.setItem("refresh_token", auth.refresh_token);
     setRefreshToken(auth.refresh_token);
-    const wrappingKey = await deriveWrappingKey(
-      password,
-      auth.user.pbkdf2_salt,
-    );
 
-    const privateKey = await unwrapPrivateKey(
-      auth.user.wrapped_private_key,
-      wrappingKey,
-    );
+    let wrappingKey: CryptoKey;
+    try {
+      wrappingKey = await deriveWrappingKey(password, auth.user.pbkdf2_salt);
+    } catch (err) {
+      console.error("[loginUser] deriveWrappingKey failed:", err);
+      throw new Error("Failed to derive encryption key. Please try again.");
+    }
 
-    const publicKey = await importPublicKey(auth.user.public_key);
+    let privateKey: CryptoKey;
+    try {
+      privateKey = await unwrapPrivateKey(
+        auth.user.wrapped_private_key,
+        wrappingKey,
+      );
+    } catch (err) {
+      console.error("[loginUser] unwrapPrivateKey failed:", err);
+      console.error(
+        "wrapped_private_key length:",
+        auth.user.wrapped_private_key?.length,
+      );
+      console.error("pbkdf2_salt:", auth.user.pbkdf2_salt);
+      throw new Error(
+        "Failed to unlock your encryption key. " +
+          "If this keeps happening, try registering again.",
+      );
+    }
 
-    await storeKeyPair(privateKey, publicKey);
+    let publicKey: CryptoKey;
+    try {
+      publicKey = await importPublicKey(auth.user.public_key);
+    } catch (err) {
+      console.error("[loginUser] importPublicKey failed:", err);
+      throw new Error("Failed to import your public key. Please try again.");
+    }
+
+    try {
+      await storeKeyPair(privateKey, publicKey);
+    } catch (err) {
+      console.error("[loginUser] storeKeyPair failed:", err);
+      throw new Error(
+        "Failed to save keys to storage. " +
+          "Private/incognito mode can block IndexedDB — try a regular browser tab.",
+      );
+    }
+
     setUser(auth.user);
   }, []);
 
@@ -183,17 +212,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const refreshSession = useCallback((newAccessToken: string, newRefreshToken?: string) => {
-    const rt = newRefreshToken ?? localStorage.getItem("refresh_token") ?? "";
-    setTokens(newAccessToken, rt);
+  const refreshSession = useCallback(
+    (newAccessToken: string, newRefreshToken?: string) => {
+      const rt = newRefreshToken ?? localStorage.getItem("refresh_token") ?? "";
+      setTokens(newAccessToken, rt);
 
-    document.cookie = `access_token=${newAccessToken}; path=/; SameSite=Lax`;
+      document.cookie = `access_token=${newAccessToken}; path=/; SameSite=Lax`;
 
-    if (newRefreshToken) {
-      localStorage.setItem("refresh_token", newRefreshToken);
-      setRefreshToken(newRefreshToken);
-    }
-  }, []);
+      if (newRefreshToken) {
+        localStorage.setItem("refresh_token", newRefreshToken);
+        setRefreshToken(newRefreshToken);
+      }
+    },
+    [],
+  );
 
   return (
     <AuthContext.Provider

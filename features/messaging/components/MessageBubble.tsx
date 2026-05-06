@@ -29,7 +29,7 @@ export function MessageBubble({ message, isSent }: MessageBubbleProps) {
       className={cn("flex w-full", isSent ? "justify-end" : "justify-start")}
     >
       <Tooltip>
-        <TooltipTrigger>
+        <TooltipTrigger className="w-full max-w-[72%]">
           <div
             className={cn(
               "relative max-w-[72%] px-3.5 py-2.5 rounded-2xl text-sm",
@@ -44,7 +44,9 @@ export function MessageBubble({ message, isSent }: MessageBubbleProps) {
             )}
           >
             {text !== null ? (
-              <p className="leading-relaxed whitespace-pre-wrap">{text}</p>
+              <p className="leading-relaxed whitespace-pre-wrap text-left">
+                {text}
+              </p>
             ) : (
               <p className="italic text-muted-foreground text-xs">
                 [Unable to decrypt message]
