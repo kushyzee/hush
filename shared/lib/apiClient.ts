@@ -1,6 +1,8 @@
 import type { TokenResponse } from "@/shared/types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
+if (!BASE_URL)
+  throw new Error("[apiClient] NEXT_PUBLIC_API_BASE_URL is not set...");
 
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
@@ -29,6 +31,36 @@ export class ApiError extends Error {
     super(message);
     this.name = "ApiError";
   }
+}
+
+async function parseBody(
+  res: Response,
+): Promise<{ data: unknown; text: string }> {
+  const text = await res.text(); // consume stream once
+  if (!text) return { data: null, text: "" };
+  try {
+    return { data: JSON.parse(text), text };
+  } catch {
+    return { data: null, text };
+  }
+}
+
+function extractErrorMessage(
+  status: number,
+  statusText: string,
+  data: unknown,
+  text: string,
+): string {
+  const detail = (data as { detail?: string } | null)?.detail;
+  if (detail?.trim()) return detail.trim();
+
+  const msg = (data as { message?: string } | null)?.message;
+  if (msg?.trim()) return msg.trim();
+
+  if (text && text.length < 200 && !text.trim().startsWith("<"))
+    return text.trim();
+
+  return `Request failed with status ${status}${statusText ? ` (${statusText})` : ""}.`;
 }
 
 async function attemptRefresh(): Promise<string | null> {
@@ -98,24 +130,16 @@ async function request<T>(
     });
   }
 
-  if (!res.ok) {
-    let body: unknown;
-    try {
-      body = await res.json();
-    } catch {
-      body = null;
-    }
-
-    const message =
-      (body as { detail?: string })?.detail ??
-      `Request failed: ${res.status} ${res.statusText}`;
-
-    throw new ApiError(res.status, message, body);
-  }
-
   if (res.status === 204) return undefined as T;
 
-  return res.json() as Promise<T>;
+  const { data, text } = await parseBody(res);
+
+  if (!res.ok) {
+    const message = extractErrorMessage(res.status, res.statusText, data, text);
+    throw new ApiError(res.status, message, data);
+  }
+
+  return data as T;
 }
 
 export const apiClient = {
@@ -132,7 +156,6 @@ export const apiClient = {
   },
 
   publicPost<T>(path: string, body?: unknown) {
-    console.log("publicPost", path, body);
     return request<T>(path, {
       method: "POST",
       body: body !== undefined ? JSON.stringify(body) : undefined,
